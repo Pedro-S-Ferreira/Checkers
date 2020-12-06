@@ -16,6 +16,7 @@ class Square:
     def __init__(self, colour, coords):
         self.colour = colour
         self.coords = coords
+        self.piece = 0
     
     def draw(self):
         pygame.draw.rect(SCREEN, self.colour, self.coords)
@@ -58,9 +59,8 @@ class WhitePiece:
             pygame.draw.circle(SCREEN, BROWN, (self.centre[0] + 64, self.centre[1] - 64), 8)
         return moves
 
-b8_1 = Square(BLACK, (64, 0, 64, 64))
-
-dark_squares = []# The only squares drawn were black ones as they're the only playable ones anyway. The background is white. The squares are found in a list, in order, from top to bottom, left to right
+dark_squares = []# The only squares drawn were black ones as they're the only playable ones anyway. 
+                #The background is white. The squares are found in a list, in order, from top to bottom, left to right
 
 for collumn in range(0, 4):
     for row in range(1, 9, 2):
@@ -68,10 +68,9 @@ for collumn in range(0, 4):
     for row in range(0, 8, 2):
         dark_squares.append(Square(BLACK, (collumn * 128 + 64, row * 64, 64, 64)))
 
-print(dark_squares[3].coords[0])
+#print(dark_squares[3].coords[0])
 
 def board_draw():
-
     for item in dark_squares:
         item.draw()
 
@@ -99,7 +98,7 @@ def pieces_draw(pieces):
     for piece in pieces:
         piece.draw()
 
-test_red_piece = RedPiece(RED, (96, 32), False)
+#test_red_piece = RedPiece(RED, (96, 32), False)
 
 SCREEN.fill(GREY)
 board_draw()
@@ -111,13 +110,13 @@ while True:
     mouse_x = pygame.mouse.get_pos()[0]
     mouse_y = pygame.mouse.get_pos()[1]
 
-    for piece in red_pieces:
+    for piece in red_pieces: #ver se o rato esta em cima de uma peca vermelha
         if mouse_x >= piece.centre[0] - 32 and mouse_x <= piece.centre[0] + 32 and mouse_y >= piece.centre[1] - 32 and mouse_y <= piece.centre[1] + 32:
             board_draw()
             pieces_draw(red_pieces + white_pieces)
             piece.available_moves()
 
-    for piece in white_pieces:
+    for piece in white_pieces: #ver se o rato esta em cima de uma peca branca
         if mouse_x >= piece.centre[0] - 32 and mouse_x <= piece.centre[0] + 32 and mouse_y >= piece.centre[1] - 32 and mouse_y <= piece.centre[1] + 32:
             board_draw()
             pieces_draw(red_pieces + white_pieces)

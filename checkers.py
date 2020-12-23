@@ -8,101 +8,92 @@ BLACK = 0, 0, 0
 GREY = 200, 200, 200
 RED = 255, 0, 0
 WHITE = 255, 255, 255
-BROWN = 128, 0, 0
+BROWN = 200, 0, 200
 
 SCREEN = pygame.display.set_mode(SIZE)
 
 class Square:
-    def __init__(self, colour, coords):
+    def __init__(self, colour, draw_coords, real_coords, piece):
         self.colour = colour
+        self.draw_coords = draw_coords
+        self.real_coords = real_coords
+        self.piece = False      
+    
+    def draw(self):
+        pygame.draw.rect(SCREEN, self.colour, self.draw_coords)
+
+class Piece:
+    def __init__(self, colour, draw_centre, coords, king):
+        self.colour = colour
+        self.draw_centre = draw_centre
         self.coords = coords
-        self.piece = 0
-    
-    def draw(self):
-        pygame.draw.rect(SCREEN, self.colour, self.coords)
-
-class RedPiece:
-    def __init__(self, colour, centre, king):
-        self.colour = colour
-        self.centre = centre
         self.king = king
     
     def draw(self):
-        pygame.draw.circle(SCREEN, RED, self.centre, 24)
-    
+        if self.colour == RED:
+            pygame.draw.circle(SCREEN, RED, self.draw_centre, 24)
+        if self.colour == WHITE:
+            pygame.draw.circle(SCREEN, WHITE, self.draw_centre, 24)
     def available_moves(self):
-        moves = []
-        if self.centre[0] > 32:
-            moves.append((self.centre[0] - 64, self.centre[1] + 64))
-            pygame.draw.circle(SCREEN, BROWN, (self.centre[0] - 64, self.centre[1] + 64), 8)
-        if self.centre[0] < 480:
-            moves.append((self.centre[0] + 64, self.centre[1] + 64))
-            pygame.draw.circle(SCREEN, BROWN, (self.centre[0] + 64, self.centre[1] + 64), 8)
-        return moves
 
-class WhitePiece:
-    def __init__(self, colour, centre, king):
-        self.colour = colour
-        self.centre = centre
-        self.king = king
-    
-    def draw(self):
-        pygame.draw.circle(SCREEN, WHITE, self.centre, 24)
-    
-    def available_moves(self):
-        moves = []
-        if self.centre[0] > 32:
-            moves.append((self.centre[0] - 64, self.centre[1] - 64))
-            pygame.draw.circle(SCREEN, BROWN, (self.centre[0] - 64, self.centre[1] - 64), 8)
-        if self.centre[0] < 480:
-            moves.append((self.centre[0] + 64, self.centre[1] - 64))
-            pygame.draw.circle(SCREEN, BROWN, (self.centre[0] + 64, self.centre[1] - 64), 8)
-        return moves
+        if self.colour == RED:
+            moves = []
+            if self.coords[0] >= 0:
+                for square in dark_squares:
+                    if square.real_coords == self.coords:#fix this
+                        moves.append((self.coords[0] - 1, self.coords[1] + 1))
+                        pygame.draw.circle(SCREEN, BROWN, (self.draw_centre[0] - 64, self.draw_centre[1] + 64), 8)
+            if self.coords[0] < 7:
+                moves.append((self.coords[0] + 1, self.coords[1] + 1))
+                pygame.draw.circle(SCREEN, BROWN, (self.draw_centre[0] + 64, self.draw_centre[1] + 64), 8)
+            return moves
+        
+        if self.colour == WHITE:
+            moves = []
+            if self.coords[0] >= 0:
+                moves.append((self.coords[0] - 1, self.coords[1] - 1))
+                pygame.draw.circle(SCREEN, BROWN, (self.draw_centre[0] - 64, self.draw_centre[1] - 64), 8)
+            if self.coords[0] < 7:
+                moves.append((self.coords[0] + 1, self.coords[1] - 1))
+                pygame.draw.circle(SCREEN, BROWN, (self.draw_centre[0] + 64, self.draw_centre[1] - 64), 8)
+            return moves
 
 dark_squares = []# The only squares drawn were black ones as they're the only playable ones anyway. 
                 #The background is white. The squares are found in a list, in order, from top to bottom, left to right
 
 for collumn in range(0, 4):
     for row in range(1, 9, 2):
-        dark_squares.append(Square(BLACK, (collumn * 128, row * 64, 64, 64)))
+        dark_squares.append(Square(BLACK, (collumn * 128, row * 64, 64, 64), (collumn, row), False))
     for row in range(0, 8, 2):
-        dark_squares.append(Square(BLACK, (collumn * 128 + 64, row * 64, 64, 64)))
-
-#print(dark_squares[3].coords[0])
+        dark_squares.append(Square(BLACK, (collumn * 128 + 64, row * 64, 64, 64), (collumn, row), False))
 
 def board_draw():
     for item in dark_squares:
         item.draw()
 
 def board_reset():
-    red_pieces = []
-    white_pieces = []
+    pieces = []
 
-    for item in dark_squares:
-        if item.coords[1] <= 128:
-            red_pieces.append(RedPiece(RED, (item.coords[0] + 32, item.coords[1] + 32), False))
+    for square in dark_squares:
+        if square.real_coords[1] <= 2:
+            pieces.append(Piece(RED, (square.draw_coords[0] + 32, square.draw_coords[1] + 32), square.real_coords, False))
+            square.piece = True
+        elif square.real_coords[1] >= 5:
+            pieces.append(Piece(WHITE, (square.draw_coords[0] + 32, square.draw_coords[1] + 32), square.real_coords, False))
+            square.piece = True
     
-    for red_piece in red_pieces:
-        red_piece.draw()
-    
-    for item in dark_squares:
-        if item.coords[1] >= 320:
-            white_pieces.append(WhitePiece(WHITE, (item.coords[0] + 32, item.coords[1] + 32), False))
-    
-    for white_piece in white_pieces:
-        white_piece.draw()
+    for piece in pieces:
+        piece.draw()
 
-    return red_pieces, white_pieces
+    return pieces
 
 def pieces_draw(pieces):
     for piece in pieces:
         piece.draw()
 
-#test_red_piece = RedPiece(RED, (96, 32), False)
-
 SCREEN.fill(GREY)
 board_draw()
-red_pieces, white_pieces = board_reset()
+pieces = board_reset()
 
 while True:
     pygame.display.update()
@@ -110,16 +101,10 @@ while True:
     mouse_x = pygame.mouse.get_pos()[0]
     mouse_y = pygame.mouse.get_pos()[1]
 
-    for piece in red_pieces: #ver se o rato esta em cima de uma peca vermelha
-        if mouse_x >= piece.centre[0] - 32 and mouse_x <= piece.centre[0] + 32 and mouse_y >= piece.centre[1] - 32 and mouse_y <= piece.centre[1] + 32:
+    for piece in pieces: #Check if the cursor is hovering over a piece
+        if mouse_x >= piece.draw_centre[0] - 32 and mouse_x <= piece.draw_centre[0] + 32 and mouse_y >= piece.draw_centre[1] - 32 and mouse_y <= piece.draw_centre[1] + 32:
             board_draw()
-            pieces_draw(red_pieces + white_pieces)
-            piece.available_moves()
-
-    for piece in white_pieces: #ver se o rato esta em cima de uma peca branca
-        if mouse_x >= piece.centre[0] - 32 and mouse_x <= piece.centre[0] + 32 and mouse_y >= piece.centre[1] - 32 and mouse_y <= piece.centre[1] + 32:
-            board_draw()
-            pieces_draw(red_pieces + white_pieces)
+            pieces_draw(pieces)
             piece.available_moves()
 
     for event in pygame.event.get():

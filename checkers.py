@@ -17,7 +17,7 @@ class Square:
         self.colour = colour
         self.draw_coords = draw_coords
         self.real_coords = real_coords
-        self.piece = False      
+        self.piece = piece      
     
     def draw(self):
         pygame.draw.rect(SCREEN, self.colour, self.draw_coords)
@@ -34,38 +34,41 @@ class Piece:
             pygame.draw.circle(SCREEN, RED, self.draw_centre, 24)
         if self.colour == WHITE:
             pygame.draw.circle(SCREEN, WHITE, self.draw_centre, 24)
+
     def available_moves(self):
+        moves = []
+        remove = []
 
         if self.colour == RED:
-            moves = []
-            if self.coords[0] >= 0:
-                for square in dark_squares:
-                    if square.real_coords == self.coords:#fix this
-                        moves.append((self.coords[0] - 1, self.coords[1] + 1))
-                        pygame.draw.circle(SCREEN, BROWN, (self.draw_centre[0] - 64, self.draw_centre[1] + 64), 8)
+            if self.coords[0] > 0:
+                moves.append([self, self.coords[0] - 1, self.coords[1] + 1])
             if self.coords[0] < 7:
-                moves.append((self.coords[0] + 1, self.coords[1] + 1))
-                pygame.draw.circle(SCREEN, BROWN, (self.draw_centre[0] + 64, self.draw_centre[1] + 64), 8)
-            return moves
+                moves.append([self, self.coords[0] + 1, self.coords[1] + 1])
         
         if self.colour == WHITE:
-            moves = []
-            if self.coords[0] >= 0:
-                moves.append((self.coords[0] - 1, self.coords[1] - 1))
-                pygame.draw.circle(SCREEN, BROWN, (self.draw_centre[0] - 64, self.draw_centre[1] - 64), 8)
+            if self.coords[0] > 0:
+                moves.append([self, self.coords[0] - 1, self.coords[1] - 1])
             if self.coords[0] < 7:
-                moves.append((self.coords[0] + 1, self.coords[1] - 1))
-                pygame.draw.circle(SCREEN, BROWN, (self.draw_centre[0] + 64, self.draw_centre[1] - 64), 8)
-            return moves
+                moves.append([self, self.coords[0] + 1, self.coords[1] - 1])
+
+        for move in moves: #To verify all moves are valid
+            for square in dark_squares:
+                if [move[1], move[2]] == square.real_coords and square.piece:
+                    remove.append(move)
+        for move in remove: #The remove list is needed as we can't remove items from a list as we're iterating it.
+            moves.remove(move)
+        for move in moves:
+            pygame.draw.circle(SCREEN, BROWN, (move[1] * 64 + 32, move[2] * 64 + 32), 8)
+        return moves
 
 dark_squares = []# The only squares drawn were black ones as they're the only playable ones anyway. 
                 #The background is white. The squares are found in a list, in order, from top to bottom, left to right
 
 for collumn in range(0, 4):
     for row in range(1, 9, 2):
-        dark_squares.append(Square(BLACK, (collumn * 128, row * 64, 64, 64), (collumn, row), False))
+        dark_squares.append(Square(BLACK, (collumn * 128, row * 64, 64, 64), [2 * collumn, row], False))
     for row in range(0, 8, 2):
-        dark_squares.append(Square(BLACK, (collumn * 128 + 64, row * 64, 64, 64), (collumn, row), False))
+        dark_squares.append(Square(BLACK, (collumn * 128 + 64, row * 64, 64, 64), [2 * collumn + 1, row], False))
 
 def board_draw():
     for item in dark_squares:
@@ -76,10 +79,10 @@ def board_reset():
 
     for square in dark_squares:
         if square.real_coords[1] <= 2:
-            pieces.append(Piece(RED, (square.draw_coords[0] + 32, square.draw_coords[1] + 32), square.real_coords, False))
+            pieces.append(Piece(RED, [square.real_coords[0] * 64 + 32, square.real_coords[1] * 64 + 32], square.real_coords, False))
             square.piece = True
         elif square.real_coords[1] >= 5:
-            pieces.append(Piece(WHITE, (square.draw_coords[0] + 32, square.draw_coords[1] + 32), square.real_coords, False))
+            pieces.append(Piece(WHITE, [square.real_coords[0] * 64 + 32, square.real_coords[1] * 64 + 32], square.real_coords, False))
             square.piece = True
     
     for piece in pieces:
@@ -101,11 +104,19 @@ while True:
     mouse_x = pygame.mouse.get_pos()[0]
     mouse_y = pygame.mouse.get_pos()[1]
 
-    for piece in pieces: #Check if the cursor is hovering over a piece
-        if mouse_x >= piece.draw_centre[0] - 32 and mouse_x <= piece.draw_centre[0] + 32 and mouse_y >= piece.draw_centre[1] - 32 and mouse_y <= piece.draw_centre[1] + 32:
-            board_draw()
-            pieces_draw(pieces)
-            piece.available_moves()
-
     for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RIGHT:
+                print("Right key pressed.")
+                pieces[0].draw_centre[0] += 10
+                pieces[0].draw()
+                
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            for piece in pieces: #Check if the cursor is hovering over a piece
+                if mouse_x >= piece.draw_centre[0] - 32 and mouse_x <= piece.draw_centre[0] + 32 and mouse_y >= piece.draw_centre[1] - 32 and mouse_y <= piece.draw_centre[1] + 32:
+                    board_draw()
+                    pieces_draw(pieces)
+                    moves = piece.available_moves()
+            for move in moves: # Do a move. Do functions that turn real coords into draw coords automatically
+                pass
         if event.type == pygame.QUIT: sys.exit()

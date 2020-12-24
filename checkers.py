@@ -146,6 +146,8 @@ def board_reset():
         elif square.real_coords[1] >= 5:
             pieces.append(Piece(WHITE, [square.real_coords[0] * 64 + 32, square.real_coords[1] * 64 + 32], square.real_coords, 0))
             square.piece = WHITE
+        else:
+            square.piece = 0
     
     for piece in pieces:
         piece.draw()
@@ -216,4 +218,10 @@ while True:
 
             except:
                 pass
+        
+        if event.type == pygame.KEYDOWN: #By pressing R, we can restart the game
+            if event.key == pygame.K_r:
+                board_draw()
+                pieces = board_reset()
+
         if event.type == pygame.QUIT: sys.exit()

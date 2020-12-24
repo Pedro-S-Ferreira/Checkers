@@ -112,13 +112,7 @@ while True:
 
     cursor_coords = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
 
-    for event in pygame.event.get():
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_RIGHT:
-                print("Right key pressed.")
-                pieces[0].draw_centre[0] += 10
-                pieces[0].draw()
-                
+    for event in pygame.event.get():                
         if event.type == pygame.MOUSEBUTTONDOWN:
             for piece in pieces: #Check if the cursor is hovering over a piece
                 if cursor_coords[0] >= piece.draw_centre[0] - 32 and cursor_coords[0] <= piece.draw_centre[0] + 32 and cursor_coords[1] >= piece.draw_centre[1] - 32 and cursor_coords[1] <= piece.draw_centre[1] + 32:

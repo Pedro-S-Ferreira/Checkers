@@ -5,9 +5,11 @@ pygame.display.set_caption("Checkers")
 
 SIZE = width, height = 512, 512
 BLACK = 0, 0, 0
-GREY = 200, 200, 200
+GREEN = 128, 200, 128
 RED = 255, 0, 0
+DARK_RED = 150, 0, 0
 WHITE = 255, 255, 255
+DARK_WHITE = 150, 150, 150
 BROWN = 200, 0, 200
 
 SCREEN = pygame.display.set_mode(SIZE)
@@ -23,7 +25,7 @@ class Square:
         self.colour = colour
         self.draw_coords = draw_coords
         self.real_coords = real_coords
-        self.piece = piece #0 means no piece, #1 means a white piece is there, #2 means a red piece is there      
+        self.piece = piece #0 means no piece, #WHITE means a white piece is there, #RED means a red piece is there      
     
     def draw(self):
         pygame.draw.rect(SCREEN, self.colour, self.draw_coords)
@@ -39,22 +41,19 @@ class Piece:
         self.draw_centre = coords_to_circle(self.coords)
     
     def draw(self):
-        if self.colour == RED:
-            pygame.draw.circle(SCREEN, RED, self.draw_centre, 24)
-        if self.colour == WHITE:
-            pygame.draw.circle(SCREEN, WHITE, self.draw_centre, 24)
+            pygame.draw.circle(SCREEN, self.colour, self.draw_centre, 24)
 
     def available_moves(self):
         moves = []
         remove = []
 
-        if self.colour == RED:
+        if self.colour in (RED, DARK_RED, DARK_WHITE):
             if self.coords[0] > 0:
                 moves.append([self, self.coords[0] - 1, self.coords[1] + 1])
             if self.coords[0] < 7:
                 moves.append([self, self.coords[0] + 1, self.coords[1] + 1])
         
-        if self.colour == WHITE:
+        if self.colour in (WHITE, DARK_RED, DARK_WHITE):
             if self.coords[0] > 0:
                 moves.append([self, self.coords[0] - 1, self.coords[1] - 1])
             if self.coords[0] < 7:
@@ -62,7 +61,61 @@ class Piece:
 
         for move in moves: #To verify all moves are valid
             for square in dark_squares:
-                if [move[1], move[2]] == square.real_coords and square.piece in (1, 2):
+                if [move[1], move[2]] == square.real_coords and square.piece in (RED, WHITE): #Piece being moved is white
+                    remove.append(move)
+        for move in remove: #The remove list is needed as we can't remove items from a list as we're iterating it.
+            moves.remove(move)
+        for move in moves:
+            pygame.draw.circle(SCREEN, BROWN, (move[1] * 64 + 32, move[2] * 64 + 32), 8)
+        return moves
+
+    def available_captures(self):
+        moves = []
+        remove = []
+
+        if self.colour in (RED, DARK_RED):
+            if self.coords[0] > 0:
+                for square in dark_squares:
+                    if square.real_coords == [self.coords[0] - 1, self.coords[1] + 1] and square.piece == WHITE:
+                        moves.append([self, self.coords[0] - 2, self.coords[1] + 2, square])
+            if self.coords[0] < 7:
+                for square in dark_squares:
+                    if square.real_coords == [self.coords[0] + 1, self.coords[1] + 1] and square.piece == WHITE:
+                        moves.append([self, self.coords[0] + 2, self.coords[1] + 2, square])
+
+        if self.colour == DARK_WHITE:
+            if self.coords[0] > 0:
+                for square in dark_squares:
+                    if square.real_coords == [self.coords[0] - 1, self.coords[1] + 1] and square.piece == RED:
+                        moves.append([self, self.coords[0] - 2, self.coords[1] + 2, square])
+            if self.coords[0] < 7:
+                for square in dark_squares:
+                    if square.real_coords == [self.coords[0] + 1, self.coords[1] + 1] and square.piece == RED:
+                        moves.append([self, self.coords[0] + 2, self.coords[1] + 2, square])
+
+        if self.colour in (WHITE, DARK_WHITE):
+            if self.coords[0] > 0:
+                for square in dark_squares:
+                    if square.real_coords == [self.coords[0] - 1, self.coords[1] - 1] and square.piece == RED:
+                        moves.append([self, self.coords[0] - 2, self.coords[1] - 2, square])
+            if self.coords[0] < 7:
+                for square in dark_squares:
+                    if square.real_coords == [self.coords[0] + 1, self.coords[1] - 1] and square.piece == RED:
+                        moves.append([self, self.coords[0] + 2, self.coords[1] - 2, square])
+
+        if self.colour == DARK_RED:
+            if self.coords[0] > 0:
+                for square in dark_squares:
+                    if square.real_coords == [self.coords[0] - 1, self.coords[1] - 1] and square.piece == WHITE:
+                        moves.append([self, self.coords[0] - 2, self.coords[1] - 2, square])
+            if self.coords[0] < 7:
+                for square in dark_squares:
+                    if square.real_coords == [self.coords[0] + 1, self.coords[1] - 1] and square.piece == WHITE:
+                        moves.append([self, self.coords[0] + 2, self.coords[1] - 2, square])
+
+        for move in moves: #To verify all moves are valid
+            for square in dark_squares:
+                if [move[1], move[2]] == square.real_coords and square.piece in (RED, WHITE): #Piece being moved is white
                     remove.append(move)
         for move in remove: #The remove list is needed as we can't remove items from a list as we're iterating it.
             moves.remove(move)
@@ -89,21 +142,37 @@ def board_reset():
     for square in dark_squares:
         if square.real_coords[1] <= 2:
             pieces.append(Piece(RED, [square.real_coords[0] * 64 + 32, square.real_coords[1] * 64 + 32], square.real_coords, 0))
-            square.piece = True
+            square.piece = RED
         elif square.real_coords[1] >= 5:
             pieces.append(Piece(WHITE, [square.real_coords[0] * 64 + 32, square.real_coords[1] * 64 + 32], square.real_coords, 0))
-            square.piece = True
+            square.piece = WHITE
     
     for piece in pieces:
         piece.draw()
 
     return pieces
 
-def pieces_draw(pieces):
+def pieces_draw(pieces):#This function draws the pieces, checks and makes them kings and checks to see if the game is over yet
+    red = []
+    white = []
     for piece in pieces:
+        if piece.coords[1] == 7 and piece.colour == RED:
+            piece.king = True
+            piece.colour = DARK_RED
+        elif piece.coords[1] == 0 and piece.colour == WHITE:
+            piece.king = True
+            piece.colour = DARK_WHITE
+        if piece.colour in (RED, DARK_RED):
+            red.append(piece)
+        if piece.colour in (WHITE, DARK_WHITE):
+            white.append(piece)
         piece.draw()
+    if len(red) == 0:
+        print("Game Over. White wins!")
+    if len(white) == 0:
+        print("Game Over. Red wins!")
 
-SCREEN.fill(GREY)
+SCREEN.fill(GREEN)
 board_draw()
 pieces = board_reset()
 
@@ -118,22 +187,33 @@ while True:
                 if cursor_coords[0] >= piece.draw_centre[0] - 32 and cursor_coords[0] <= piece.draw_centre[0] + 32 and cursor_coords[1] >= piece.draw_centre[1] - 32 and cursor_coords[1] <= piece.draw_centre[1] + 32:
                     board_draw()
                     pieces_draw(pieces)
-                    moves = piece.available_moves()
+                    moves = piece.available_moves() + piece.available_captures()
             try:
-                for move in moves: # Do a move. Do functions that turn real coords into draw coords automatically
+                for move in moves:
                     if cursor_coords[0] > coords_to_square(move[1], move[2])[0] and cursor_coords[1] > coords_to_square(move[1], move[2])[1] and cursor_coords[0] < coords_to_square(move[1], move[2])[0] + 64 and cursor_coords[1] < coords_to_square(move[1], move[2])[1] + 64:
                         for square in dark_squares: #Make it so the square the piece is about to leave knows it no longuer has a piece
                             if square.real_coords == move[0].coords:
-                                square.piece = False
+                                square.piece = 0
                                 board_draw()#board_draw() is needed instead of simply square_draw() as the other indication of possible movement (small purple circle), if present, also needs to be erased
                         
                         move[0].coords = [move[1], move[2]] #Give the piece new coordinates and draw it in its new place
                         move[0].draw_centre = coords_to_circle(move[1], move[2])
+                        try:
+                            for piece in pieces:
+                                if piece.coords == move[3].real_coords:
+                                    pieces.remove(piece)
+                                    move[3].piece = 0
+                        except:
+                            pass
                         pieces_draw(pieces)
 
                         for square in dark_squares: #Make it so the square the piece is now on knows it has a piece
                             if square.real_coords == move[0].coords:
-                                square.piece = True
+                                if move[0].colour in (RED, DARK_RED):
+                                    square.piece = RED
+                                elif move[0].colour in (WHITE, DARK_WHITE):
+                                    square.piece = WHITE
+
             except:
                 pass
         if event.type == pygame.QUIT: sys.exit()

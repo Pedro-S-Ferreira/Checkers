@@ -1,0 +1,2 @@
+A checkers game coded entirely in python, making use of the system and pygame packages. It makes use of object-oriented programming to handle the pieces and the squares of the board, with useful custom functions that handle the piece movement, capture and promotion.
+The game can be played with two players, recognising at the end which player is victorious, even allowing to be played again without needing the restart the script.

@@ -10,7 +10,7 @@ RED = 255, 0, 0
 DARK_RED = 150, 0, 0
 WHITE = 255, 255, 255
 DARK_WHITE = 150, 150, 150
-BROWN = 200, 0, 200
+BROWN = 255, 255, 100
 
 SCREEN = pygame.display.set_mode(SIZE)
 
@@ -66,7 +66,7 @@ class Piece:
         for move in remove: #The remove list is needed as we can't remove items from a list as we're iterating it.
             moves.remove(move)
         for move in moves:
-            pygame.draw.circle(SCREEN, BROWN, (move[1] * 64 + 32, move[2] * 64 + 32), 8)
+            pygame.draw.circle(SCREEN, BROWN, (move[1] * 64 + 32, move[2] * 64 + 32), 12)
         return moves
 
     def available_captures(self):
@@ -120,7 +120,7 @@ class Piece:
         for move in remove: #The remove list is needed as we can't remove items from a list as we're iterating it.
             moves.remove(move)
         for move in moves:
-            pygame.draw.circle(SCREEN, BROWN, (move[1] * 64 + 32, move[2] * 64 + 32), 8)
+            pygame.draw.circle(SCREEN, BROWN, (move[1] * 64 + 32, move[2] * 64 + 32), 16)
         return moves
 
 dark_squares = []# The only squares drawn were black ones as they're the only playable ones anyway. 
@@ -152,7 +152,7 @@ def board_reset():
     for piece in pieces:
         piece.draw()
 
-    return pieces
+    return pieces, (WHITE, DARK_WHITE)
 
 def pieces_draw(pieces):#This function draws the pieces, checks and makes them kings and checks to see if the game is over yet
     red = []
@@ -170,13 +170,16 @@ def pieces_draw(pieces):#This function draws the pieces, checks and makes them k
             white.append(piece)
         piece.draw()
     if len(red) == 0:
-        print("Game Over. White wins!")
-    if len(white) == 0:
-        print("Game Over. Red wins!")
+        print("Game Over. White wins! Press \"R\" to play again.")
+        return 1
+    elif len(white) == 0:
+        print("Game Over. Red wins! Press \"R\" to play again.")
+        return 2
 
 SCREEN.fill(GREEN)
 board_draw()
-pieces = board_reset()
+pieces, play = board_reset()
+print("White to play.")
 
 while True:
     pygame.display.update()
@@ -186,7 +189,7 @@ while True:
     for event in pygame.event.get():                
         if event.type == pygame.MOUSEBUTTONDOWN:
             for piece in pieces: #Check if the cursor is hovering over a piece
-                if cursor_coords[0] >= piece.draw_centre[0] - 32 and cursor_coords[0] <= piece.draw_centre[0] + 32 and cursor_coords[1] >= piece.draw_centre[1] - 32 and cursor_coords[1] <= piece.draw_centre[1] + 32:
+                if cursor_coords[0] >= piece.draw_centre[0] - 32 and cursor_coords[0] <= piece.draw_centre[0] + 32 and cursor_coords[1] >= piece.draw_centre[1] - 32 and cursor_coords[1] <= piece.draw_centre[1] + 32 and piece.colour in play:
                     board_draw()
                     pieces_draw(pieces)
                     moves = piece.available_moves() + piece.available_captures()
@@ -208,6 +211,16 @@ while True:
                         except:
                             pass
                         pieces_draw(pieces)
+                        moves = []
+                        if not pieces_draw(pieces):
+                            if play == (WHITE, DARK_WHITE):
+                                play = (RED, DARK_RED)
+                                print("Red to play.")
+                            elif play == (RED, DARK_RED):
+                                play = (WHITE, DARK_WHITE)
+                                print("White to play.")
+                        else:
+                            play = (0, 0)# It has to be a list and not just False so line 198 doesn't return an error.
 
                         for square in dark_squares: #Make it so the square the piece is now on knows it has a piece
                             if square.real_coords == move[0].coords:
